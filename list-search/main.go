@@ -64,7 +64,6 @@ func (l *item) check(i int) {
 		l.child.check(i)
 	}
 }
-func (l *item) next() *item { return l.child }
 func (l *item) shift(i *int) {
 	if l.child != nil {
 		l.child.shift(l.value)

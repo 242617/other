@@ -1,5 +1,16 @@
 package search
 
+func NewItem(n int) *item {
+	root := &item{}
+	current := root
+	for i := 1; i < n; i++ {
+		current.child = &item{}
+		current = current.child
+		current.number = i
+	}
+	return root
+}
+
 type item struct {
 	number int
 	child  *item

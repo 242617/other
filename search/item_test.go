@@ -7,7 +7,7 @@ import (
 )
 
 func TestListShift(t *testing.T) {
-	item := newItem(5)
+	item := NewItem(5)
 	a, b, c, d := 1, 2, 3, 5
 	item.value = &a
 	item.child.value = &b

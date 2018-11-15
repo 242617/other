@@ -22,7 +22,7 @@ func main() {
 }
 
 func Max(arr []int, n int) []*int {
-	item := newItem(n)
+	item := NewItem(n)
 	for _, i := range arr {
 		item.check(i)
 	}
@@ -33,17 +33,6 @@ func Max(arr []int, n int) []*int {
 		cur = cur.child
 	}
 	return res
-}
-
-func newItem(n int) *item {
-	root := &item{}
-	current := root
-	for i := 1; i < n; i++ {
-		current.child = &item{}
-		current = current.child
-		current.number = i
-	}
-	return root
 }
 
 func check(arr []*int) string {

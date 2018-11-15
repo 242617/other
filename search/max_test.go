@@ -1,6 +1,8 @@
-package main
+package search
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestMax(t *testing.T) {
 	arr := Max([]int{0, 10, 100, 20, 1000, -30}, 3)

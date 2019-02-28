@@ -1,9 +1,10 @@
+// +build windows,amd64
 package main
 
 // #include <stdio.h>
 // #include <stdlib.h>
 import "C"
-import "unsafe"
+import "strings"
 
 func main() {}
 
@@ -19,16 +20,11 @@ func SetInt(n int32) int32 {
 
 //export GetString
 func GetString() *C.char {
-	cs := C.CString("hello!")
-	defer C.free(unsafe.Pointer(cs))
-	// C.fputs(cs, (*C.FILE)(C.stdout))
-	return cs
+	return C.CString("hello!")
 }
 
 //export SetString
-func SetString(str string) *C.char {
-	cs := C.CString(str)
-	defer C.free(unsafe.Pointer(cs))
-	// C.fputs(cs, (*C.FILE)(C.stdout))
-	return cs
+func SetString(str *C.char) *C.char {
+	s := C.GoString(str)
+	return C.CString(strings.ToUpper(s) + "-" + strings.ToLower(s) + "-" + "...")
 }

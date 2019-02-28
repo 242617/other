@@ -1,4 +1,5 @@
 dll:
+	cls
 	del lib.dll
 	go build -o lib.dll -buildmode=c-shared lib.go
 

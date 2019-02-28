@@ -1,3 +1,4 @@
+// +build windows,amd64
 package main
 
 import "C"
@@ -8,63 +9,51 @@ import (
 	"unsafe"
 )
 
-const LibPath = "lib.dll"
+var lib = syscall.NewLazyDLL("lib.dll")
 
 func main() {
 	log.SetFlags(log.Lshortfile)
-	fmt.Println("start")
-
 	GetInt()
 	SetInt()
 	GetString()
 	SetString()
-
-	fmt.Println("done")
 }
 
 func GetInt() {
-	fmt.Println("GetInt")
-	proto := syscall.NewLazyDLL(LibPath)
-	getInt := proto.NewProc("GetInt")
-	res, r2, err := getInt.Call()
-	if r2 != 0 {
+	getInt := lib.NewProc("GetInt")
+	res, _, err := getInt.Call()
+	if err != syscall.Errno(0) {
 		panic(err)
 	}
-	fmt.Println(res)
+	fmt.Println("GetInt:", res)
 }
 
 func SetInt() {
-	fmt.Println("SetInt")
-	proto := syscall.NewLazyDLL(LibPath)
-	setInt := proto.NewProc("SetInt")
-	res, r2, err := setInt.Call(13)
-	if r2 != 0 {
+	setInt := lib.NewProc("SetInt")
+	res, _, err := setInt.Call(13)
+	if err != syscall.Errno(0) {
 		panic(err)
 	}
-	fmt.Println(res)
+	fmt.Println("SetInt:", res)
 }
 
 func GetString() {
-	fmt.Println("GetString")
-	proto := syscall.NewLazyDLL(LibPath)
-	getString := proto.NewProc("GetString")
-	res, r2, err := getString.Call()
-	if r2 != 0 {
+	getString := lib.NewProc("GetString")
+	res, _, err := getString.Call()
+	if err != syscall.Errno(0) {
 		panic(err)
 	}
-	fmt.Println(string(res))
+	charPtr := (*C.char)(unsafe.Pointer(res))
+	fmt.Println("GetString:", C.GoString(charPtr))
 }
 
 func SetString() {
-	fmt.Println("SetString")
-	proto := syscall.NewLazyDLL(LibPath)
-	setString := proto.NewProc("SetString")
-	str := "test string"
-	prt := unsafe.Pointer(&str)
-	uptr := (uintptr)(prt)
-	res, r2, err := setString.Call(uptr)
-	if r2 != 0 {
+	setString := lib.NewProc("SetString")
+	cs := C.CString("Hey!")
+	res, _, err := setString.Call(uintptr(unsafe.Pointer(cs)))
+	if err != syscall.Errno(0) {
 		panic(err)
 	}
-	fmt.Println(string(res))
+	charPtr := (*C.char)(unsafe.Pointer(res))
+	fmt.Println("SetString:", C.GoString(charPtr))
 }

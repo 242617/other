@@ -1,10 +1,17 @@
 // +build windows,amd64
 package main
 
-// #include <stdio.h>
-// #include <stdlib.h>
+/*
+struct GetStructs {
+   char *id;
+   char *hash;
+};
+*/
 import "C"
-import "strings"
+import (
+	"strings"
+	"unsafe"
+)
 
 func main() {}
 
@@ -27,4 +34,14 @@ func GetString() *C.char {
 func SetString(str *C.char) *C.char {
 	s := C.GoString(str)
 	return C.CString(strings.ToUpper(s) + "-" + strings.ToLower(s) + "-" + "...")
+}
+
+var getStructsSize = C.size_t(unsafe.Sizeof(C.struct_GetStructs{}))
+
+//export GetStructs
+func GetStructs(id, hash *C.char) unsafe.Pointer {
+	ptr := C.malloc(getStructsSize)
+	res := (*C.struct_GetStructs)(ptr)
+	res.id, res.hash = hash, id
+	return unsafe.Pointer(ptr)
 }

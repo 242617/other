@@ -10,13 +10,12 @@ import (
 func main() {
 	log.SetFlags(log.Lshortfile)
 
-	if len(os.Args) < 4 {
-		log.Fatal("not enough arguments")
-	}
+	checkArgs(1, "not enough arguments")
 
 	switch os.Args[1] {
 
 	case "zip":
+		checkArgs(4, "not enough arguments for zip")
 		target := os.Args[2]
 		files := os.Args[3:]
 		err := zip.Zip(target, files...)
@@ -25,6 +24,7 @@ func main() {
 		}
 
 	case "unzip":
+		checkArgs(4, "not enough arguments for unzip")
 		source := os.Args[2]
 		target := os.Args[3]
 		err := zip.UnZip(source, target)
@@ -32,6 +32,15 @@ func main() {
 			log.Fatal("err", err)
 		}
 
+	default:
+		log.Fatal("unknown mode")
+
 	}
 
+}
+
+func checkArgs(n int, s string) {
+	if len(os.Args) < n {
+		log.Fatal(s)
+	}
 }

@@ -3,6 +3,7 @@ package sort
 import (
 	"reflect"
 	"sort"
+	"time"
 )
 
 func Sort(array []interface{}, order Order) []interface{} {
@@ -27,9 +28,12 @@ func (c container) Less(i, j int) bool {
 	}
 
 	switch vi.(type) {
-	case uint:
+	case uint, uint32, uint64, int, int32, int64:
 		uinti, uintj := vi.(uint), vj.(uint)
 		return uinti < uintj
+	case time.Time:
+		timei, timej := vi.(time.Time), vj.(time.Time)
+		return timei.Before(timej)
 	}
 
 	return false
@@ -40,8 +44,8 @@ func (c container) get(i int) (reflect.Type, interface{}) {
 	v := reflect.ValueOf(c.d[i])
 	for j := 0; j < t.NumField(); j++ {
 		field := t.Field(j)
-		tag := field.Tag.Get(order.FieldType)
-		if tag == order.Field {
+		tag := field.Tag.Get(c.o.FieldType)
+		if tag == c.o.Field {
 			return field.Type, v.Field(j).Interface()
 		}
 	}

@@ -22,9 +22,7 @@ var order = Order{
 	Direction: DirectionAscending,
 }
 
-func init() {
-	log.SetFlags(log.Lshortfile)
-}
+func init() { log.SetFlags(log.Lshortfile) }
 
 func TestSort(t *testing.T) {
 
@@ -39,6 +37,9 @@ func TestSort(t *testing.T) {
 		sorted[i] = value.(Item)
 	}
 
+	if len(sorted) != len(unsorted) {
+		t.Fatalf("incorrect length: need %d, got %d", len(unsorted), len(sorted))
+	}
 	if sorted[0].Name != "first" {
 		t.Fatalf(`expected "%s", but got "%s"`, "first", sorted[0].Name)
 	}

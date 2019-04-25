@@ -92,14 +92,11 @@ func TestSort(t *testing.T) {
 		if len(sorted) != len(unsorted) {
 			t.Fatalf("error in %s: incorrect length: need %d, got %d", test.Description, len(unsorted), len(sorted))
 		}
-		if sorted[0].Name != test.Result[0] {
-			t.Fatalf(`error in %s: expected "%s", but got "%s"`, test.Description, test.Result[0], sorted[0].Name)
-		}
-		if sorted[1].Name != test.Result[1] {
-			t.Fatalf(`error in %s: expected "%s", but got "%s"`, test.Description, test.Result[1], sorted[1].Name)
-		}
-		if sorted[2].Name != test.Result[2] {
-			t.Fatalf(`error in %s: expected "%s", but got "%s"`, test.Description, test.Result[2], sorted[2].Name)
+
+		for i := range sorted {
+			if sorted[i].Name != test.Result[i] {
+				t.Fatalf(`error in %s: expected "%s", but got "%s"`, test.Description, test.Result[i], sorted[i].Name)
+			}
 		}
 
 	}

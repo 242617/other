@@ -27,16 +27,36 @@ func (c container) Less(i, j int) bool {
 		panic("incompatible type")
 	}
 
+	var result bool
 	switch vi.(type) {
-	case uint, uint32, uint64, int, int32, int64:
-		uinti, uintj := vi.(uint), vj.(uint)
-		return uinti < uintj
+	case uint:
+		result = vi.(uint) < vj.(uint)
+	case uint32:
+		result = vi.(uint32) < vj.(uint32)
+	case uint64:
+		result = vi.(uint64) < vj.(uint64)
+	case int:
+		result = vi.(int) < vj.(int)
+	case int32:
+		result = vi.(int32) < vj.(int32)
+	case int64:
+		result = vi.(int64) < vj.(int64)
+	case float32:
+		result = vi.(float32) < vj.(float32)
+	case float64:
+		result = vi.(float64) < vj.(float64)
 	case time.Time:
 		timei, timej := vi.(time.Time), vj.(time.Time)
-		return timei.Before(timej)
+		result = timei.Before(timej)
+	default:
+		panic("unsopported type")
 	}
 
-	return false
+	if c.o.Direction != DirectionAscending {
+		result = !result
+	}
+
+	return result
 }
 
 func (c container) get(i int) (reflect.Type, interface{}) {

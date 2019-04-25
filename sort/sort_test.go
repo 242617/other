@@ -7,37 +7,69 @@ import (
 )
 
 type Item struct {
-	Name      string    `json:"name"`
-	Order     uint      `json:"order"`
+	Name      string
+	Order     uint      `xml:"order"`
+	Count     int32     `custom_tag:"count"`
+	Amount    float64   `bson:"amount"`
 	CreatedAt time.Time `json:"created_at"`
 }
 type Items []Item
 
 var unsorted = Items{
-	{"second", 14, time.Now().Add(3 * time.Second)},
-	{"third", 20, time.Now().Add(time.Second)},
-	{"first", 10, time.Now().Add(2 * time.Second)},
+	{"second", 14, -17, 120.00, time.Now().Add(3 * time.Second)},
+	{"third", 20, -24, 20.40, time.Now().Add(time.Second)},
+	{"first", 10, 2, -40.20, time.Now().Add(2 * time.Second)},
 }
 
 var tests = []struct {
-	Order  Order
-	Result []string
+	Description string
+	Order       Order
+	Result      []string
 }{
 	{
+		Description: "ascending sort by uint test",
 		Order: Order{
 			Field:     "order",
-			FieldType: "json",
+			FieldType: "xml",
 			Direction: DirectionAscending,
 		},
 		Result: []string{"first", "second", "third"},
 	},
 	{
+		Description: "descending sort by int32 test",
+		Order: Order{
+			Field:     "count",
+			FieldType: "custom_tag",
+			Direction: DirectionDescending,
+		},
+		Result: []string{"first", "second", "third"},
+	},
+	{
+		Description: "descending sort by float64 test",
+		Order: Order{
+			Field:     "amount",
+			FieldType: "bson",
+			Direction: DirectionAscending,
+		},
+		Result: []string{"first", "third", "second"},
+	},
+	{
+		Description: "ascending sort by time.Time test",
 		Order: Order{
 			Field:     "created_at",
 			FieldType: "json",
 			Direction: DirectionAscending,
 		},
 		Result: []string{"third", "first", "second"},
+	},
+	{
+		Description: "descending sort by time.Time test",
+		Order: Order{
+			Field:     "created_at",
+			FieldType: "json",
+			Direction: DirectionDescending,
+		},
+		Result: []string{"second", "first", "third"},
 	},
 }
 
@@ -58,16 +90,16 @@ func TestSort(t *testing.T) {
 		}
 
 		if len(sorted) != len(unsorted) {
-			t.Fatalf("incorrect length: need %d, got %d", len(unsorted), len(sorted))
+			t.Fatalf("error in %s: incorrect length: need %d, got %d", test.Description, len(unsorted), len(sorted))
 		}
 		if sorted[0].Name != test.Result[0] {
-			t.Fatalf(`expected "%s", but got "%s"`, test.Result[0], sorted[0].Name)
+			t.Fatalf(`error in %s: expected "%s", but got "%s"`, test.Description, test.Result[0], sorted[0].Name)
 		}
 		if sorted[1].Name != test.Result[1] {
-			t.Fatalf(`expected "%s", but got "%s"`, test.Result[1], sorted[1].Name)
+			t.Fatalf(`error in %s: expected "%s", but got "%s"`, test.Description, test.Result[1], sorted[1].Name)
 		}
 		if sorted[2].Name != test.Result[2] {
-			t.Fatalf(`expected "%s", but got "%s"`, test.Result[2], sorted[2].Name)
+			t.Fatalf(`error in %s: expected "%s", but got "%s"`, test.Description, test.Result[2], sorted[2].Name)
 		}
 
 	}

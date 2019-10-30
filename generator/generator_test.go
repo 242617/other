@@ -36,11 +36,11 @@ func Test_generator(t *testing.T) {
 		for length, list := range data[charset] {
 
 			gCh := New(length, charset)
-			for _, ethalon := range list {
+			for _, want := range list {
 
-				result := <-gCh
-				if result != ethalon {
-					t.Fatalf("result %s, wanted %s", result, ethalon)
+				got := <-gCh
+				if got != want {
+					t.Fatalf("got %s; want %s", got, want)
 				}
 
 			}

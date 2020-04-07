@@ -8,9 +8,9 @@ import (
 	"sync"
 )
 
-type histogram map[rune]uint64
+type histogram map[rune]int
 
-func Check(folder string) (*histogram, error) {
+func Scan(folder string) (*histogram, error) {
 
 	fileInfos, err := ioutil.ReadDir(folder)
 	if err != nil {
@@ -31,7 +31,7 @@ func Check(folder string) (*histogram, error) {
 	go func() {
 		var l sync.Mutex
 		h := histogram{}
-		ch := checkFiles(files, errCh)
+		ch := scanFiles(files, errCh)
 		for value := range ch {
 			l.Lock()
 			h[value]++
@@ -48,13 +48,13 @@ func Check(folder string) (*histogram, error) {
 	}
 }
 
-func checkFiles(files []string, errCh chan error) chan rune {
+func scanFiles(files []string, errCh chan error) chan rune {
 	filesCh := make(chan rune)
 
 	go func() {
 		for _, filePath := range files {
 
-			for fileRes := range checkFile(filePath, errCh) {
+			for fileRes := range ScanFile(filePath, errCh) {
 				filesCh <- fileRes
 			}
 
@@ -65,7 +65,7 @@ func checkFiles(files []string, errCh chan error) chan rune {
 	return filesCh
 }
 
-func checkFile(filePath string, errCh chan error) chan rune {
+func ScanFile(filePath string, errCh chan error) chan rune {
 	resCh := make(chan rune)
 
 	go func() {

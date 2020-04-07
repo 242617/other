@@ -10,7 +10,7 @@ import (
 
 func main() {
 	start := time.Now()
-	res, err := histogram.Check("./files")
+	res, err := histogram.Scan("./files")
 	if err != nil {
 		log.Fatal(err)
 	}

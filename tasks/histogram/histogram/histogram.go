@@ -10,8 +10,6 @@ import (
 
 type histogram map[rune]uint64
 
-var l sync.Mutex
-
 func Check(folder string) (*histogram, error) {
 
 	fileInfos, err := ioutil.ReadDir(folder)
@@ -27,42 +25,60 @@ func Check(folder string) (*histogram, error) {
 		files = append(files, folder+"/"+fileInfo.Name())
 	}
 
-	h := histogram{}
-	ch := checkFiles(files)
-	for value := range ch {
-		l.Lock()
-		h[value]++
-		l.Unlock()
-	}
+	resCh := make(chan *histogram)
+	errCh := make(chan error)
 
-	return &h, nil
+	go func() {
+		var l sync.Mutex
+		h := histogram{}
+		ch := checkFiles(files, errCh)
+		for value := range ch {
+			l.Lock()
+			h[value]++
+			l.Unlock()
+		}
+		resCh <- &h
+	}()
+
+	select {
+	case res := <-resCh:
+		return res, nil
+	case err := <-errCh:
+		return nil, err
+	}
 }
 
-func checkFiles(files []string) chan rune {
-	resCh := make(chan rune)
+func checkFiles(files []string, errCh chan error) chan rune {
+	filesCh := make(chan rune)
 
 	go func() {
 		for _, filePath := range files {
 
-			for fileRes := range checkFile(filePath) {
-				resCh <- fileRes
+			for fileRes := range checkFile(filePath, errCh) {
+				filesCh <- fileRes
 			}
 
 		}
-		close(resCh)
+		close(filesCh)
 	}()
 
-	return resCh
+	return filesCh
 }
 
-func checkFile(filePath string) chan rune {
+func checkFile(filePath string, errCh chan error) chan rune {
 	resCh := make(chan rune)
 
 	go func() {
 		file, err := os.OpenFile(filePath, os.O_RDONLY, 0644)
 		if err != nil {
-			panic(err)
+			errCh <- err
 		}
+		defer func() {
+			err = file.Close()
+			if err != nil {
+				errCh <- err
+			}
+		}()
 
 		reader := bufio.NewReader(file)
 		for err == nil {
@@ -72,7 +88,7 @@ func checkFile(filePath string) chan rune {
 				continue
 			}
 			if err != nil {
-				panic(err)
+				errCh <- err
 				break
 			}
 			resCh <- rune(b)

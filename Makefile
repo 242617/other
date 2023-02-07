@@ -1,5 +1,6 @@
 
 test:
-	go test \
+	@go test \
 		--race \
+		-v \
 		./...

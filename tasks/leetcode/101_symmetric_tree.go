@@ -37,9 +37,3 @@ func IsSymmetric(root *TreeNode) bool {
 
 	return true
 }
-
-type TreeNode struct {
-	Val   int
-	Left  *TreeNode
-	Right *TreeNode
-}

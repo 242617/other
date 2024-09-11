@@ -5,6 +5,7 @@ Messing around with Golang.
 ## tasks
 
 * Linked list implementation
+* Leetcode challenges
 
 ## generator
 

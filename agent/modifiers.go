@@ -1,32 +1,28 @@
 package agent
 
-import (
-	"net/http"
-	"net/url"
-	"strings"
-
-	"github.com/ollama/ollama/api"
-
-	"github.com/242617/other/tools"
-)
+import "strings"
 
 type Modifier = func(*Agent)
 
-func withDefaultClient() Modifier {
-	return WithClient(api.NewClient(&url.URL{Scheme: "http", Host: "localhost:11434"}, &http.Client{}))
-}
-func WithClientFromAddress(scheme, address string) Modifier {
-	return WithClient(api.NewClient(&url.URL{Scheme: scheme, Host: address}, &http.Client{}))
-}
-func WithClient(client *api.Client) Modifier {
-	return func(a *Agent) { a.client = client }
+func WithProvider(provider Provider) Modifier {
+	return func(a *Agent) { a.provider = provider }
 }
 
 func withDefaultModel() Modifier      { return WithModel("llama3.2:3b") }
 func WithModel(model string) Modifier { return func(a *Agent) { a.model = model } }
 
-func WithTools(tools ...tools.Tool) Modifier {
+func WithTools(tools ...Tool) Modifier {
 	return func(a *Agent) { a.tools = append(a.tools, tools...) }
+}
+
+func withDefaultOptions() Modifier {
+	return WithOptions(map[string]any{
+		"temperature":   0.0,
+		"repeat_last_n": 2,
+	})
+}
+func WithOptions(options map[string]any) Modifier {
+	return func(a *Agent) { a.options = options }
 }
 
 func withDefaultSystem() Modifier {
@@ -42,13 +38,7 @@ func withDefaultSystem() Modifier {
 }
 func WithSystem(system string) Modifier { return func(a *Agent) { a.system = system } }
 
-func withDefaultOptions() Modifier {
-	return WithOptions(map[string]any{
-		"temperature":   0.0,
-		"repeat_last_n": 2,
-	})
-}
-
-func WithOptions(options map[string]any) Modifier {
-	return func(a *Agent) { a.options = options }
+func withDefaultOnMessageFunc() Modifier { return WithOnMessageFunc(func(Message) {}) }
+func WithOnMessageFunc(fn MessageCallback) Modifier {
+	return func(a *Agent) { a.onMessageFunc = fn }
 }

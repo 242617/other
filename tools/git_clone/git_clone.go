@@ -7,8 +7,6 @@ import (
 	"log/slog"
 	"os/exec"
 
-	"github.com/pkg/errors"
-
 	"github.com/242617/other/agent"
 )
 
@@ -47,18 +45,16 @@ type Args struct {
 	Directory      string `json:"directory"`
 }
 
-func (t *GitClone) Call(_ context.Context, raw string) (string, error) {
-	slog.Debug("call", "raw", raw)
-
+func (t *GitClone) Call(_ context.Context, raw string) string {
 	var args Args
 	if err := json.Unmarshal([]byte(raw), &args); err != nil {
-		return "", errors.Wrap(err, "json unmarshal")
+		return fmt.Sprintf("Cannot unmarshal arguments due to error: %q", err.Error())
 	}
+	slog.Debug("call", "args", args)
 
 	cmd := exec.Command("git", "clone", args.RepositoryName, args.Directory)
 	if err := cmd.Run(); err != nil {
-		return fmt.Sprintf("failed to clone %q into %q", args.RepositoryName, args.Directory), errors.Wrap(err, "cmd run")
+		return fmt.Sprintf("Cannot clone %q into %q due to error: %q", args.RepositoryName, args.Directory, err.Error())
 	}
-
-	return "done", nil
+	return fmt.Sprintf("✅ Repository %q cloned into %q successfully", args.RepositoryName, args.Directory)
 }

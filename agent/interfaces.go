@@ -21,5 +21,5 @@ type Provider interface {
 type Tool interface {
 	Name() string
 	Info() ToolInfo
-	Call(ctx context.Context, args string) (string, error)
+	Call(ctx context.Context, args string) string
 }

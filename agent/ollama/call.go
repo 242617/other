@@ -75,16 +75,10 @@ func (p *Ollama) Call(ctx context.Context, model string, tools agent.Tools, text
 						return errors.Wrap(err, "json marshal")
 					}
 
-					result, err := tool.Call(ctx, string(b))
-					if err != nil {
-						slog.Error("tool call", "err", err, "arguments", string(b))
-						return errors.Wrap(err, "tool call")
-					}
-
 					messages = append(messages,
 						api.Message{
 							Role:     "tool",
-							Content:  result,
+							Content:  tool.Call(ctx, string(b)),
 							ToolName: tool.Name(),
 						},
 					)

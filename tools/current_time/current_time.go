@@ -3,10 +3,10 @@ package current_time
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"log/slog"
 	"strings"
 	"time"
-
-	"github.com/pkg/errors"
 
 	"github.com/242617/other/agent"
 )
@@ -43,16 +43,16 @@ type Args struct {
 	TimeZone string `json:"tz"`
 }
 
-func (t *CurrentTime) Call(_ context.Context, raw string) (string, error) {
+func (t *CurrentTime) Call(_ context.Context, raw string) string {
 	var args Args
 	if err := json.Unmarshal([]byte(raw), &args); err != nil {
-		return "", errors.Wrap(err, "json unmarshal")
+		return fmt.Sprintf("cannot unmarshal arguments due to error: %q", err.Error())
 	}
 
+	slog.Debug(t.Name(), "time zone", args.TimeZone)
 	loc, err := time.LoadLocation(args.TimeZone)
 	if err != nil {
-		return "", errors.Wrap(err, "time load location")
+		return fmt.Sprintf("cannot load location %q due to error: %q", args.TimeZone, err.Error())
 	}
-
-	return time.Now().In(loc).Format(time.DateTime), nil
+	return time.Now().In(loc).Format(time.DateTime)
 }

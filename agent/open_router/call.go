@@ -73,17 +73,11 @@ func (p *OpenRouter) Call(ctx context.Context, model string, tools agent.Tools, 
 			for _, tool := range tools {
 				if toolCall.Function.Name == tool.Name() {
 
-					result, err := tool.Call(ctx, toolCall.Function.Arguments)
-					if err != nil {
-						slog.Error("tool call", "err", err, "arguments", toolCall.Function.Arguments)
-						return errors.Wrap(err, "tool call")
-					}
-
 					messages = append(messages,
 						message{
 							Role:       "tool",
 							ToolCallID: toolCall.ID,
-							Content:    result,
+							Content:    tool.Call(ctx, toolCall.Function.Arguments),
 						},
 					)
 

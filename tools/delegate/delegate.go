@@ -4,9 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"strings"
-
-	"github.com/pkg/errors"
 
 	"github.com/242617/other/agent"
 )
@@ -48,10 +47,17 @@ type Args struct {
 	Task string `json:"task"`
 }
 
-func (t *Delegate) Call(ctx context.Context, raw string) (string, error) {
+func (t *Delegate) Call(ctx context.Context, raw string) string {
 	var args Args
 	if err := json.Unmarshal([]byte(raw), &args); err != nil {
-		return "", errors.Wrap(err, "json unmarshal")
+		return fmt.Sprintf("cannot unmarshal arguments due to error: %q", err.Error())
 	}
-	return t.assistant.Call(ctx, args.Task)
+	slog.Debug("call", "args", args)
+
+	response, err := t.assistant.Call(ctx, args.Task)
+	if err != nil {
+		return fmt.Sprintf("cannot call assistant due to error: %q", err.Error())
+	}
+
+	return response
 }

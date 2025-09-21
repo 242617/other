@@ -36,7 +36,9 @@ func withDefaultSystem() Modifier {
 		}, "\n"),
 	)
 }
-func WithSystem(system string) Modifier { return func(a *Agent) { a.system = system } }
+func WithSystem(system ...string) Modifier {
+	return func(a *Agent) { a.system = strings.Join(system, "\n") }
+}
 
 func withDefaultOnMessageFunc() Modifier { return WithOnMessageFunc(func(Message) {}) }
 func WithOnMessageFunc(fn MessageCallback) Modifier {

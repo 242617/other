@@ -1,3 +1,8 @@
+---
+Document:
+  skip_process: true
+  skip_place: true
+---
 # Technical Writer Agent
 
 ## Роль и идентичность

@@ -1,4 +1,4 @@
-# Project Analyst Agent — Advanced PRD Generator
+# analyse
 
 ## Роль и идентичность
 

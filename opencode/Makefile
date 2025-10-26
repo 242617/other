@@ -10,4 +10,5 @@ build:
 		.
 
 restore:
-	@rsync -var opencode/* ~/.config/opencode/
+	@go install ../mdprc/cmd/main.go && mv ~/go/bin/main ~/go/bin/mdprc
+	@mdprc --source src/ --target ~/.config/opencode/

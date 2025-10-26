@@ -134,15 +134,13 @@ func Parse(root, path string) (Document, error) {
 		),
 	}
 
-	var metaContainer struct {
-		Meta `yaml:"Meta"`
-	}
-	if _, err := frontmatter.MustParse(bytes.NewReader(document.contents), &metaContainer); errors.Is(err, frontmatter.ErrNotFound) {
+	var meta Meta
+	if _, err := frontmatter.MustParse(bytes.NewReader(document.contents), &meta); errors.Is(err, frontmatter.ErrNotFound) {
 		return document, nil
 	} else if err != nil {
 		return Document{}, errors.Wrap(err, "frontmatter must parse")
 	}
-	document.meta = metaContainer.Meta
+	document.meta = meta
 
 	if err := document.apply(); err != nil {
 		return Document{}, errors.Wrap(err, "document apply")
@@ -161,16 +159,8 @@ func (d *Document) apply() error {
 		return errors.Wrap(err, "frontmatter parse")
 	}
 
-	_, metaExists := d.properties["Meta"]
-	if !metaExists {
-		return nil
-	}
-
 	if d.meta.RemoveProperties {
 		d.contents = rest
-		return nil
-	}
-	if d.meta.LeaveMeta {
 		return nil
 	}
 
@@ -180,9 +170,16 @@ func (d *Document) apply() error {
 	}
 	unwrapped := unwrap(string(props))
 
-	res, err := remove(unwrapped, ".Meta")
-	if err != nil {
-		return errors.Wrap(err, "unexpected behaviour: remove")
+	res := unwrapped
+	for _, key := range []string{
+		`.[mdprc:skip_execute]`,
+		`.[mdprc:skip_place]`,
+		`.[mdprc:remove_properties]`,
+	} {
+		res, err = remove(res, key)
+		if err != nil && !errors.Is(err, ErrKeyNotFound) {
+			return errors.Wrap(err, "unexpected behaviour: remove")
+		}
 	}
 	res = strings.TrimSpace(res)
 	if res == "{}" {
@@ -225,10 +222,9 @@ type (
 		tpl        *template.Template
 	}
 	Meta struct {
-		SkipExecute      bool `yaml:"skip_execute"`
-		SkipPlace        bool `yaml:"skip_place"`
-		RemoveProperties bool `yaml:"remove_properties"`
-		LeaveMeta        bool `yaml:"leave_meta"`
+		SkipExecute      bool `yaml:"[mdprc:skip_execute]"`
+		SkipPlace        bool `yaml:"[mdprc:skip_place]"`
+		RemoveProperties bool `yaml:"[mdprc:remove_properties]"`
 	}
 )
 
@@ -277,6 +273,8 @@ func remove(doc string, path string) (string, error) {
 	return string(out), nil
 }
 
+var ErrKeyNotFound = errors.New("key not found")
+
 func removeNestedKey(node *yaml.Node, keys []string) error {
 	if node.Kind == yaml.DocumentNode {
 		if len(node.Content) == 0 {
@@ -285,9 +283,9 @@ func removeNestedKey(node *yaml.Node, keys []string) error {
 		return removeNestedKey(node.Content[0], keys)
 	}
 
-	if node.Kind != yaml.MappingNode {
-		return fmt.Errorf("expected mapping node")
-	}
+	// if node.Kind != yaml.MappingNode {
+	// 	return fmt.Errorf("expected mapping node")
+	// }
 
 	if len(keys) == 1 {
 		// Последний ключ - удаляем его
@@ -297,7 +295,7 @@ func removeNestedKey(node *yaml.Node, keys []string) error {
 				return nil
 			}
 		}
-		return fmt.Errorf("key %q not found", keys[0])
+		return errors.Wrap(ErrKeyNotFound, fmt.Sprintf("key %q not found", keys[0]))
 	}
 
 	// Ищем следующий уровень вложенности
@@ -306,5 +304,5 @@ func removeNestedKey(node *yaml.Node, keys []string) error {
 			return removeNestedKey(node.Content[i+1], keys[1:])
 		}
 	}
-	return fmt.Errorf("key %q not found", keys[0])
+	return errors.Wrap(ErrKeyNotFound, fmt.Sprintf("key %q not found", keys[0]))
 }

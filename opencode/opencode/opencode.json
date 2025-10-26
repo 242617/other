@@ -143,7 +143,7 @@
 		},
 		"code-reviewer": {
 			"enabled": true,
-			"mode": "subagent",
+			"mode": "all",
 			"description": "РЕВЬЮЕР: Проверяет качество, безопасность, производительность кода, архитектурную соответствие, дает approval/rejection. ОТВЕТСТВЕННОСТЬ: все code review. ЗАПРЕТ ДЛЯ ДРУГИХ: Orchestrator не выполняет code review, go-developer не проверяет свой код",
 			"prompt": "{file:~/.config/opencode/agent/code-reviewer.md}",
 			"temperature": 0.1,
@@ -158,7 +158,7 @@
 		},
 		"technical-writer": {
 			"enabled": true,
-			"mode": "subagent",
+			"mode": "all",
 			"description": "ДОКУМЕНТАЛИСТ: Пишет и редактирует ВСЮ документацию (API docs, README, архитектура, комментарии). ОТВЕТСТВЕННОСТЬ: вся документация. ЗАПРЕТ ДЛЯ ДРУГИХ: Orchestrator не пишет документацию, go-developer/python-developer/javascript-developer не документирует API",
 			"prompt": "{file:~/.config/opencode/agent/technical-writer.md}",
 			"temperature": 0.3,
@@ -175,7 +175,7 @@
 	"mode": {
 		"analyze": {
 			"model": "lmstudio/qwen/qwen3-coder-30b",
-			"prompt": "{file:~/.config/opencode/agent/project-analyst.md}",
+			"prompt": "{file:~/.config/opencode/agent/project-analyst-expanded.md}",
 			"tools": {
 				"context7": true
 			}

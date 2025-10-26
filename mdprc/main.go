@@ -164,6 +164,7 @@ func (d *Document) apply() error {
 		return nil
 	}
 
+	// Remove mdprc properties
 	props, ok := bytes.CutSuffix(d.contents, rest)
 	if !ok {
 		return errors.New("unexpected behaviour: bytes cut suffix")
@@ -176,11 +177,16 @@ func (d *Document) apply() error {
 		`.[mdprc:skip_place]`,
 		`.[mdprc:remove_properties]`,
 	} {
-		res, err = remove(res, key)
-		if err != nil && !errors.Is(err, ErrKeyNotFound) {
+		changed, err := remove(res, key)
+		if errors.Is(err, ErrKeyNotFound) {
+			continue
+		}
+		if err != nil {
 			return errors.Wrap(err, "unexpected behaviour: remove")
 		}
+		res = changed
 	}
+
 	res = strings.TrimSpace(res)
 	if res == "{}" {
 		d.contents = rest
@@ -189,7 +195,6 @@ func (d *Document) apply() error {
 	wrapped := wrap(res)
 
 	d.contents = append([]byte(wrapped), rest...)
-
 	return nil
 }
 

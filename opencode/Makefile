@@ -4,6 +4,7 @@ clean:
 
 build:
 	@docker build \
+		--no-cache \
 		--tag opencode \
 		--file Dockerfile \
 		.

@@ -44,11 +44,12 @@
 		"orchestrator": {
 			"enabled": true,
 			"mode": "primary",
-			"description": "КООРДИНАТОР: Разбивает задачи, делегирует работу агентам (project-analyst, go-developer, test-engineer, code-reviewer, technical-writer), НЕ ПИШЕТ КОД/ТЕСТЫ/ДОКУМЕНТЫ, управляет зависимостями и интегрирует результаты. ПРАВИЛО: Любая разработка → go-developer, любые тесты → test-engineer, любая документация → technical-writer, любой review → code-reviewer, любой PRD → project-analyst",
+			"description": "КООРДИНАТОР: Разбивает задачи, делегирует работу агентам (project-analyst, go-developer, test-engineer, code-reviewer, technical-writer), НЕ ПИШЕТ КОД/ТЕСТЫ/ДОКУМЕНТЫ, управляет зависимостями и интегрирует результаты. ПРАВИЛО: Любая разработка → go-developer/python-developer/javascript-developer, любые тесты → test-engineer, любая документация → technical-writer, любой review → code-reviewer, любой PRD → project-analyst",
 			"prompt": "{file:~/.config/opencode/agent/orchestrator.md}",
 			"temperature": 0.2,
 			"tools": {
-				"context7": true
+				"context7": true,
+				"webfetch": true
 			},
 			"permission": {
 				"edit": "deny",
@@ -158,7 +159,7 @@
 		"technical-writer": {
 			"enabled": true,
 			"mode": "subagent",
-			"description": "ДОКУМЕНТАЛИСТ: Пишет ВСЮ документацию (API docs, README, архитектура, комментарии). ОТВЕТСТВЕННОСТЬ: вся документация. ЗАПРЕТ ДЛЯ ДРУГИХ: Orchestrator не пишет документацию, go-developer не документирует API",
+			"description": "ДОКУМЕНТАЛИСТ: Пишет и редактирует ВСЮ документацию (API docs, README, архитектура, комментарии). ОТВЕТСТВЕННОСТЬ: вся документация. ЗАПРЕТ ДЛЯ ДРУГИХ: Orchestrator не пишет документацию, go-developer/python-developer/javascript-developer не документирует API",
 			"prompt": "{file:~/.config/opencode/agent/technical-writer.md}",
 			"temperature": 0.3,
 			"tools": {

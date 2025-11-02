@@ -45,7 +45,7 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash && \
 RUN curl -fsSL https://opencode.ai/install | VERSION=0.15.19 bash
 
 # Конфигурирование
-COPY ./opencode /root/.config/opencode
+COPY ./build/ /root/.config/opencode
 
 # Рабочая директория
 WORKDIR /workspace

@@ -7,17 +7,31 @@ import (
 	"github.com/pkg/errors"
 )
 
-func New(modifiers ...Modifier) (*Agent, error) {
+func New[T Configurer](items ...T) (*Agent, error) {
 	var a Agent
 
-	defaultModifiers := []Modifier{
+	configurers := []any{
 		withDefaultModel(),
 		withDefaultOptions(),
 		withDefaultSystem(),
+		withDefaultStorage(),
 		withDefaultOnMessageFunc(),
 	}
-	for _, modifier := range append(defaultModifiers, modifiers...) {
-		modifier(&a)
+	for _, item := range items {
+		configurers = append(configurers, item)
+	}
+
+	for _, configurer := range configurers {
+		switch configurer := any(configurer).(type) {
+		case Modifier:
+			configurer(&a)
+		case Option:
+			if err := configurer(&a); err != nil {
+				return nil, errors.Wrap(err, "apply option")
+			}
+		default:
+			return nil, errors.New("unexpected type")
+		}
 	}
 
 	if a.provider == nil {
@@ -26,45 +40,46 @@ func New(modifiers ...Modifier) (*Agent, error) {
 	if a.model == "" {
 		return nil, errors.New("empty model")
 	}
+	if a.storage == nil {
+		return nil, errors.New("empty storage")
+	}
+	if a.messageCallback == nil {
+		return nil, errors.New("empty message callback")
+	}
 
 	return &a, nil
 }
 
 type Agent struct {
-	provider      Provider
-	model         string
-	tools         Tools
-	options       map[string]any
-	system        string
-	onMessageFunc MessageCallback
+	provider        Provider
+	model           string
+	tools           Tools
+	options         map[string]any
+	system          string
+	storage         HistoryStorage
+	messageCallback MessageCallback
 }
 
 // Session starts a new session
 func (a *Agent) Session(ctx context.Context) (*Session, error) {
-	storage := &inmemoryStorage{}
-
 	encoded, err := a.provider.EncodeSystemMessage(Message{Role: "system", Text: a.system})
 	if err != nil {
 		return nil, errors.Wrap(err, "provider encode system message")
 	}
-	if err := storage.Rpush(encoded); err != nil {
+	if err := a.storage.Append(encoded); err != nil {
 		return nil, errors.Wrap(err, "storage rpush")
 	}
 
-	s := Session{
-		agent:   a,
-		storage: storage,
-	}
+	s := Session{agent: a}
 	return &s, nil
 }
 
 type Session struct {
-	agent   *Agent
-	storage HistoryStorage
+	agent *Agent
 }
 
 func (s *Session) Call(ctx context.Context, text string) (string, error) {
-	res, err := s.agent.provider.Call(ctx, s.agent.model, s.agent.tools, text, s.storage, s.agent.onMessageFunc)
+	res, err := s.agent.provider.Call(ctx, s.agent.model, s.agent.tools, text, s.agent.storage, s.agent.messageCallback)
 	if err != nil {
 		return "", errors.Wrap(err, "provider call")
 	}
@@ -72,7 +87,7 @@ func (s *Session) Call(ctx context.Context, text string) (string, error) {
 }
 
 func (s *Session) History() string {
-	list, err := s.storage.Range()
+	list, err := s.agent.storage.List()
 	if err != nil {
 		panic(err)
 	}

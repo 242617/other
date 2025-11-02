@@ -1,14 +1,21 @@
 
+process:
+	@rm -rf build/ && mkdir -p build/
+	@mdprc --source src/ --target build/
+
 clean:
 	@docker builder prune
 
-build:
+build: process
 	@docker build \
 		--no-cache \
 		--tag opencode \
 		--file Dockerfile \
 		.
 
-restore:
-	@go install ../mdprc/cmd/main.go && mv ~/go/bin/main ~/go/bin/mdprc
-	@mdprc --source src/ --target ~/.config/opencode/
+restore: process
+	@rm -rf ~/.config/opencode/ && mkdir -p ~/.config/opencode/
+	@cp -R build/ ~/.config/opencode/
+
+up:
+	@modd

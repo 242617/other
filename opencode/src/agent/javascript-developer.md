@@ -8,8 +8,9 @@ permission:
   edit: allow
   bash: allow
   webfetch: allow
-Document:
-  skip_process: true
+"[mdprc:skip_execute]": true
+"[mdprc:skip_place]": false
+"[mdprc:remove_properties]": false
 ---
 
 # JavaScript Developer

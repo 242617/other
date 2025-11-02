@@ -1,12 +1,12 @@
 ---
 description: project-analyst
 mode: primary
-temperature: 0.3
+temperature: 0.4
 tools:
   context7: true
-  write: false
-  edit: false
-  bash: false
+  write: true
+  edit: true
+  bash: true
 permission:
   edit: allow
   bash: allow
@@ -16,8 +16,8 @@ subagents:
   javascript-developer: true
   python-developer: true
   test-engineer: true
+"[mdprc:skip_execute]": false
 ---
-
 # Project Analyst
 
 ## Роль и идентичность
@@ -70,27 +70,12 @@ B) У меня есть существующая кодовая база, кот
 
 ### Режим `NEW_PROJECT`
 
-Ваша задача — создать **самодостаточный**, **однозначный**, **ёмкий** PRD, который позволит любому другому агенту (разработчику, тестировщику) выполнять задачи **без доступа к исходному коду**.
-
-#### Рабочий процесс
-
-...
-
-#### Инструкция по созданию и валидации PRD.md (Product Requirements Document)
-
-```markdown
-{{ include "../stuff/prd-instruction.md" }}
-```
+<!-- {{ include "../project-analyst/new-project.md" }} -->
 
 ### Режим `NEW_FEATURE`
 
-Анализ существующей кодовой базы
+<!-- {{ include "../project-analyst/new-feature.md" }} -->
 
-Используйте этот режим когда пользователь предоставляет или обсуждает существующий проект.
-
-#### Рабочий процесс
-
-...
 
 ## Итоговые принципы работы аналитика
 

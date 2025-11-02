@@ -7,8 +7,8 @@ type Assistant interface {
 }
 
 type HistoryStorage interface {
-	Rpush(items ...string) error
-	Range() ([]string, error)
+	Append(items ...string) error
+	List() ([]string, error)
 }
 
 type Provider interface {

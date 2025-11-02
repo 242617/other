@@ -1,7 +1,7 @@
 ---
-Document:
-  skip_process: true
-  skip_place: true
+"[mdprc:skip_execute]": true
+"[mdprc:skip_place]": true
+"[mdprc:remove_properties]": true
 ---
 # Technical Writer Agent
 

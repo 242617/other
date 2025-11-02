@@ -77,7 +77,7 @@ func (fs *FS) ReplaceInFile() *Command {
 func applyDiff(content, diff string) (string, error) {
 	blocks := parseDiffBlocks(diff)
 	if len(blocks) == 0 {
-		return content, fmt.Errorf("no valid SEARCH/REPLACE blocks found in diff")
+		return content, fmt.Errorf("no valid SEARCH/REPLACE blocks found in diff %q", diff)
 	}
 
 	modifiedContent := content

@@ -8,3 +8,6 @@ test:
 install\:rename:
 	@go install rename/rename.go
 	# @go install github.com/242617/other/rename/rename.go
+
+install\:mdprc:
+	@go install mdprc/mdprc.go

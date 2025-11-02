@@ -18,6 +18,9 @@ func (p *Ollama) Call(ctx context.Context, model string, tools agent.Tools, text
 	if p.decode == nil {
 		return "", errors.New("empty decode")
 	}
+	if onMessage == nil {
+		onMessage = func(agent.Message) {}
+	}
 
 	resCh := make(chan string, 1)
 

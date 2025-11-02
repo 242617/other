@@ -34,14 +34,14 @@ func (p *Ollama) appendToHistory(storage agent.HistoryStorage, messages ...api.M
 		}
 		items[i] = item
 	}
-	if err := storage.Rpush(items...); err != nil {
+	if err := storage.Append(items...); err != nil {
 		return errors.Wrap(err, "storage rpush")
 	}
 	return nil
 }
 
 func (p *Ollama) getHistory(storage agent.HistoryStorage) ([]api.Message, error) {
-	list, err := storage.Range()
+	list, err := storage.List()
 	if err != nil {
 		return nil, errors.Wrap(err, "storage range")
 	}

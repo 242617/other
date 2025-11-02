@@ -1,3 +1,8 @@
+---
+"[mdprc:skip_execute]": true
+"[mdprc:skip_place]": true
+"[mdprc:remove_properties]": true
+---
 # Инструкция по созданию и валидации Product Requirements Document
 
 ## Введение

@@ -9,16 +9,6 @@
 				"baseURL": "http://host.docker.internal:1234/v1",
 				"timeout": 2400000,
 				"stream": true
-			},
-			"models": {
-				"qwen/qwen3-coder-30b": {
-					"name": "Qwen3 30B Coder",
-					"reasoning": true
-				},
-				"openai/gpt-oss-20b": {
-					"name": "GPT OSS 20B",
-					"reasoning": true
-				}
 			}
 		},
 		"deepseek": {
@@ -40,107 +30,16 @@
 	},
 	// "model": "lmstudio/qwen/qwen3-coder-30b",
 	// "small_model": "lmstudio/openai/gpt-oss-20b",
-	"agent": {
-		// "test-engineer": {
-		// 	"enabled": true,
-		// 	"mode": "subagent",
-		// 	"description": "ТЕСТИРОВЩИК: Пишет ВСЕ тесты (unit, integration, e2e), обеспечивает покрытие > 80%, использует TestContainers. ОТВЕТСТВЕННОСТЬ: все тестирование. ЗАПРЕТ ДЛЯ ДРУГИХ: Orchestrator не пишет тесты, go-developer не пишет integration тесты без test-engineer",
-		// 	"prompt": "{file:~/.config/opencode/agent/test-engineer.md}",
-		// 	"temperature": 0.2,
-		// 	"tools": {
-		// 		"context7": true
-		// 	},
-		// 	"permission": {
-		// 		"edit": "allow",
-		// 		"bash": "allow",
-		// 		"webfetch": "allow"
-		// 	}
-		// },
-		// "go-developer": {
-		// 	"enabled": true,
-		// 	"mode": "subagent",
-		// 	"description": "РАЗРАБОТЧИК: Пишет ВЕСЬ production-ready Go код (handlers, services, repositories), следует best practices. ОТВЕТСТВЕННОСТЬ: вся разработка. ЗАПРЕТ ДЛЯ ДРУГИХ: Orchestrator не пишет Go код, test-engineer не пишет бизнес-логику",
-		// 	"prompt": "{file:~/.config/opencode/agent/go-developer.md}",
-		// 	"temperature": 0.2,
-		// 	"tools": {
-		// 		"context7": true
-		// 	},
-		// 	"permission": {
-		// 		"edit": "allow",
-		// 		"bash": "allow",
-		// 		"webfetch": "allow"
-		// 	}
-		// },
-		// "python-developer": {
-		// 	"enabled": true,
-		// 	"mode": "subagent",
-		// 	"description": "РАЗРАБОТЧИК: Пишет ВЕСЬ production-ready Python код, следует best practices. ОТВЕТСТВЕННОСТЬ: вся разработка на Python. ЗАПРЕТ ДЛЯ ДРУГИХ: Orchestrator не пишет Python код, test-engineer не пишет бизнес-логику",
-		// 	"prompt": "{file:~/.config/opencode/agent/python-developer.md}",
-		// 	"temperature": 0.2,
-		// 	"tools": {
-		// 		"context7": true
-		// 	},
-		// 	"permission": {
-		// 		"edit": "allow",
-		// 		"bash": "allow",
-		// 		"webfetch": "allow"
-		// 	}
-		// },
-		// "javascript-developer": {
-		// 	"enabled": true,
-		// 	"mode": "subagent",
-		// 	"description": "РАЗРАБОТЧИК: Пишет ВЕСЬ production-ready JavaScript код, следует best practices. ОТВЕТСТВЕННОСТЬ: вся разработка на JavaScript. ЗАПРЕТ ДЛЯ ДРУГИХ: Orchestrator не пишет JavaScript код, test-engineer не пишет бизнес-логику",
-		// 	"prompt": "{file:~/.config/opencode/agent/javascript-developer.md}",
-		// 	"temperature": 0.2,
-		// 	"tools": {
-		// 		"context7": true
-		// 	},
-		// 	"permission": {
-		// 		"edit": "allow",
-		// 		"bash": "allow",
-		// 		"webfetch": "allow"
-		// 	}
-		// },
-		// "code-reviewer": {
-		// 	"enabled": true,
-		// 	"mode": "all",
-		// 	"description": "РЕВЬЮЕР: Проверяет качество, безопасность, производительность кода, архитектурную соответствие, дает approval/rejection. ОТВЕТСТВЕННОСТЬ: все code review. ЗАПРЕТ ДЛЯ ДРУГИХ: Orchestrator не выполняет code review, go-developer не проверяет свой код",
-		// 	"prompt": "{file:~/.config/opencode/agent/code-reviewer.md}",
-		// 	"temperature": 0.1,
-		// 	"tools": {
-		// 		"context7": true
-		// 	},
-		// 	"permission": {
-		// 		"edit": "allow",
-		// 		"bash": "allow",
-		// 		"webfetch": "allow"
-		// 	}
-		// },
-		// "technical-writer": {
-		// 	"enabled": true,
-		// 	"mode": "all",
-		// 	"description": "ДОКУМЕНТАЛИСТ: Пишет и редактирует ВСЮ документацию (API docs, README, архитектура, комментарии). ОТВЕТСТВЕННОСТЬ: вся документация. ЗАПРЕТ ДЛЯ ДРУГИХ: Orchestrator не пишет документацию, go-developer/python-developer/javascript-developer не документирует API",
-		// 	"prompt": "{file:~/.config/opencode/agent/technical-writer.md}",
-		// 	"temperature": 0.3,
-		// 	"tools": {
-		// 		"context7": true
-		// 	},
-		// 	"permission": {
-		// 		"edit": "allow",
-		// 		"bash": "deny",
-		// 		"webfetch": "allow"
-		// 	}
-		// }
+	"agent": {},
+	"mode": {
+		"analyze": {
+			"model": "lmstudio/qwen/qwen3-coder-30b",
+			"prompt": "{file:~/.config/opencode/mode/analyse.md}",
+			"tools": {
+				"context7": true
+			}
+		}
 	},
-	// "mode": {
-	// 	"analyze": {
-	// 		"model": "lmstudio/qwen/qwen3-coder-30b",
-	// 		"prompt": "{file:~/.config/opencode/agent/project-analyst-expanded.md}",
-	// 		"tools": {
-	// 			"context7": true
-	// 		}
-	// 	}
-	// },
 	"mcp": {
 		"context7": {
 			"type": "local",

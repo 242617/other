@@ -39,7 +39,8 @@ func (p *Ollama) Call(
 	defer func(startFrom int) {
 		if err := p.appendToHistory(storage, h[startFrom:]...); err != nil {
 			slog.Error("append to history", "err", err,
-				"count", h[startFrom:])
+				"count", h[startFrom:],
+			)
 			panic(err) // TODO: Get rid of panic
 		}
 	}(len(h))
@@ -58,8 +59,9 @@ func (p *Ollama) Call(
 			Tools:    toTools(tools.Info()),
 			// Think:    &api.ThinkValue{Value: "low"},
 		}
+
 		if err := p.client.Chat(ctx, &req, fn); err != nil {
-			slog.Error("completions", "err", err, "req", req)
+			slog.Error("chat", "err", err, "req", req)
 			return errors.Wrap(err, "session agent client chat")
 		}
 		return nil

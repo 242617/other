@@ -10,7 +10,7 @@ import (
 	"github.com/242617/other/agent"
 )
 
-func (lms *LMS) Call(
+func (p *LMS) Call(
 	ctx context.Context,
 	model string,
 	tools agent.Tools,
@@ -18,10 +18,10 @@ func (lms *LMS) Call(
 	storage agent.HistoryStorage,
 	onMessage agent.MessageCallback,
 ) (string, error) {
-	if lms.encode == nil {
+	if p.encode == nil {
 		return "", errors.New("empty encode")
 	}
-	if lms.decode == nil {
+	if p.decode == nil {
 		return "", errors.New("empty decode")
 	}
 	if onMessage == nil {
@@ -30,13 +30,13 @@ func (lms *LMS) Call(
 
 	resChan := make(chan string, 1)
 
-	h, err := lms.loadHistory(storage)
+	h, err := p.loadHistory(storage)
 	if err != nil {
 		return "", errors.Wrap(err, "load history")
 	}
 
 	defer func(startFrom int) {
-		if err := lms.saveHistory(storage, h[startFrom:]...); err != nil {
+		if err := p.saveHistory(storage, h[startFrom:]...); err != nil {
 			slog.Error("failed to save history", "err", err,
 				"count", h[startFrom:],
 			)
@@ -58,7 +58,7 @@ func (lms *LMS) Call(
 			Tools:    convertTools(tools.Info()),
 		}
 
-		resp, err := lms.client.CreateChatCompletion(ctx, req)
+		resp, err := p.client.CreateChatCompletion(ctx, req)
 		if err != nil {
 			slog.Error("create chat completion", "err", err, "req", req)
 			return errors.Wrap(err, "create chat completion")
@@ -80,7 +80,7 @@ func (lms *LMS) Call(
 		}
 
 		// Process tool calls
-		toolMessages := lms.processToolCalls(ctx, responseMsg.ToolCalls, tools)
+		toolMessages := p.processToolCalls(ctx, responseMsg.ToolCalls, tools)
 		if len(toolMessages) == 0 {
 			// No valid tool responses, return the assistant's message as-is
 			resChan <- responseMsg.Content

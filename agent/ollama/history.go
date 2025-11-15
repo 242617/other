@@ -40,7 +40,7 @@ func (p *Ollama) appendToHistory(storage agent.HistoryStorage, messages ...api.M
 	return nil
 }
 
-func (p *Ollama) getHistory(storage agent.HistoryStorage) ([]api.Message, error) {
+func (p *Ollama) loadHistory(storage agent.HistoryStorage) ([]api.Message, error) {
 	list, err := storage.List()
 	if err != nil {
 		return nil, errors.Wrap(err, "storage range")

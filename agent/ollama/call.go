@@ -11,7 +11,14 @@ import (
 	"github.com/242617/other/agent"
 )
 
-func (p *Ollama) Call(ctx context.Context, model string, tools agent.Tools, text string, storage agent.HistoryStorage, onMessage agent.MessageCallback) (string, error) {
+func (p *Ollama) Call(
+	ctx context.Context,
+	model string,
+	tools agent.Tools,
+	text string,
+	storage agent.HistoryStorage,
+	onMessage agent.MessageCallback,
+) (string, error) {
 	if p.encode == nil {
 		return "", errors.New("empty encode")
 	}
@@ -24,14 +31,15 @@ func (p *Ollama) Call(ctx context.Context, model string, tools agent.Tools, text
 
 	resCh := make(chan string, 1)
 
-	h, err := p.getHistory(storage)
+	h, err := p.loadHistory(storage)
 	if err != nil {
-		return "", errors.Wrap(err, "list to history")
+		return "", errors.Wrap(err, "load history")
 	}
 
 	defer func(startFrom int) {
 		if err := p.appendToHistory(storage, h[startFrom:]...); err != nil {
-			slog.Error("append to history", "err", err, "count", h[startFrom:])
+			slog.Error("append to history", "err", err,
+				"count", h[startFrom:])
 			panic(err) // TODO: Get rid of panic
 		}
 	}(len(h))

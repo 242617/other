@@ -90,5 +90,8 @@ func toTools(tools []agent.ToolInfo) []api.Tool {
 }
 
 func (p *Ollama) EncodeSystemMessage(msg agent.Message) (string, error) {
-	return p.encode(api.Message{Role: msg.Role, Content: msg.Text})
+	return p.encode(api.Message{
+		Role:    msg.Role,
+		Content: msg.Text,
+	})
 }

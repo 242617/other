@@ -76,12 +76,12 @@ func createMockTool(name, description, result string) *mockTool {
 }
 
 func TestNew(t *testing.T) {
-	provider := lms.New("http://127.0.0.1:1234")
+	provider := lms.New(lms.WithHost("http://127.0.0.1:1234"))
 	assert.NotNil(t, provider)
 }
 
 func TestEncodeSystemMessage(t *testing.T) {
-	provider := lms.New("http://127.0.0.1:1234")
+	provider := lms.New(lms.WithHost("http://127.0.0.1:1234"))
 
 	agentMsg := agent.Message{
 		Role: openai.ChatMessageRoleSystem,
@@ -132,7 +132,7 @@ func TestCallWithMockServer(t *testing.T) {
 
 	// Create provider with mock server URL
 	baseURL := strings.TrimPrefix(server.URL, "http://")
-	provider := lms.New("http://" + baseURL)
+	provider := lms.New(lms.WithHost("http://" + baseURL))
 
 	// Test basic call
 	ctx := context.Background()
@@ -234,7 +234,7 @@ func TestCallWithToolCalling(t *testing.T) {
 
 	// Create provider with mock server URL
 	baseURL := strings.TrimPrefix(server.URL, "http://")
-	provider := lms.New("http://" + baseURL)
+	provider := lms.New(lms.WithHost("http://" + baseURL))
 
 	// Create mock calculator tool
 	calcTool := createMockTool("calculator", "A calculator tool", "4")
@@ -274,7 +274,7 @@ func TestCallWithToolCalling(t *testing.T) {
 // Test error scenarios
 func TestCallWithConnectionError(t *testing.T) {
 	// Create provider with invalid URL
-	provider := lms.New("http://invalid-host:9999")
+	provider := lms.New(lms.WithHost("http://invalid-host:9999"))
 
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
@@ -296,7 +296,7 @@ func TestCallWithContextCancellation(t *testing.T) {
 	defer server.Close()
 
 	baseURL := strings.TrimPrefix(server.URL, "http://")
-	provider := lms.New("http://" + baseURL)
+	provider := lms.New(lms.WithHost("http://" + baseURL))
 
 	// Short timeout context
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
@@ -336,7 +336,7 @@ func TestCallWithEmptyTools(t *testing.T) {
 	defer server.Close()
 
 	baseURL := strings.TrimPrefix(server.URL, "http://")
-	provider := lms.New("http://" + baseURL)
+	provider := lms.New(lms.WithHost("http://" + baseURL))
 
 	ctx := context.Background()
 	storage := &mockHistoryStorage{}

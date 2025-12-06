@@ -19,10 +19,16 @@ type (
 	decodeFunc = func(item string) (openai.ChatCompletionMessage, error)
 )
 
-func New(host string) *LMS {
+func New(modifiers ...Modifier) *LMS {
+	var lms LMS
+
+	for _, modifier := range append([]Modifier{withDefaultClientTimeout()}, modifiers...) {
+		modifier(&lms)
+	}
+
 	config := openai.DefaultConfig("")
-	config.BaseURL = host + "/v1"
-	config.HTTPClient = &http.Client{Timeout: time.Minute}
+	config.BaseURL = lms.host + "/v1"
+	config.HTTPClient = &http.Client{Timeout: lms.timeout}
 
 	return &LMS{
 		encode: encode,
@@ -33,6 +39,9 @@ func New(host string) *LMS {
 }
 
 type LMS struct {
+	host    string
+	timeout time.Duration
+
 	encode encodeFunc
 	decode decodeFunc
 	client *openai.Client

@@ -22,7 +22,7 @@ func TestLiveIntegration(t *testing.T) {
 	}
 
 	// Create provider for live LM Studio instance
-	provider := lms.New("http://127.0.0.1:1234")
+	provider := lms.New(lms.WithHost("http://127.0.0.1:1234"))
 	storage := inmemory_storage.New(10, 100) // 10 pinned system messages, 100 shifting conversation messages
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -123,7 +123,7 @@ func TestLiveSimpleChat(t *testing.T) {
 		t.Skip("Skipping live test")
 	}
 
-	provider := lms.New("http://127.0.0.1:1234")
+	provider := lms.New(lms.WithHost("http://127.0.0.1:1234"))
 	storage := &mockHistoryStorage{}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()

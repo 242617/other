@@ -27,7 +27,7 @@ func New(modifiers ...Modifier) *LMS {
 	}
 
 	config := openai.DefaultConfig("")
-	config.BaseURL = lms.host + "/v1"
+	config.BaseURL = lms.address + "/v1"
 	config.HTTPClient = &http.Client{Timeout: lms.timeout}
 
 	return &LMS{
@@ -39,7 +39,7 @@ func New(modifiers ...Modifier) *LMS {
 }
 
 type LMS struct {
-	host    string
+	address string
 	timeout time.Duration
 
 	encode encodeFunc

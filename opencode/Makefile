@@ -13,9 +13,5 @@ build: process
 		--file Dockerfile \
 		.
 
-restore: process
-	@rm -rf ~/.config/opencode/ && mkdir -p ~/.config/opencode/
-	@cp -R build/ ~/.config/opencode/
-
 up:
 	@modd

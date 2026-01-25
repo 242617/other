@@ -8,8 +8,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/242617/other/mdprc/document"
 	"github.com/pkg/errors"
+
+	"github.com/242617/other/mdprc/document"
 )
 
 func init() { log.SetFlags(log.Lshortfile) }

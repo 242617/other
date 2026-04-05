@@ -75,6 +75,22 @@ func createMockTool(name, description, result string) *mockTool {
 	}
 }
 
+// getTextFromMessage extracts text from OpenAI ChatCompletionMessage
+// It handles both Content field and MultiContent field
+func getTextFromMessage(msg openai.ChatCompletionMessage) string {
+	if msg.Content != "" {
+		return msg.Content
+	}
+	// If Content is empty, check MultiContent
+	var textParts []string
+	for _, part := range msg.MultiContent {
+		if part.Type == openai.ChatMessagePartTypeText {
+			textParts = append(textParts, part.Text)
+		}
+	}
+	return strings.Join(textParts, " ")
+}
+
 func TestNew(t *testing.T) {
 	provider := lms.New(lms.WithAddress("http://127.0.0.1:1234"))
 	assert.NotNil(t, provider)
@@ -97,7 +113,8 @@ func TestEncodeSystemMessage(t *testing.T) {
 func TestCallWithMockServer(t *testing.T) {
 	// Create mock server
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/v1/chat/completions" {
+		// Accept both /v1/chat/completions and /chat/completions paths
+		if r.URL.Path != "/v1/chat/completions" && r.URL.Path != "/chat/completions" {
 			http.NotFound(w, r)
 			return
 		}
@@ -118,7 +135,7 @@ func TestCallWithMockServer(t *testing.T) {
 					Index: 0,
 					Message: openai.ChatCompletionMessage{
 						Role:    openai.ChatMessageRoleAssistant,
-						Content: "Mock response to: " + req.Messages[len(req.Messages)-1].Content,
+						Content: "Mock response to: " + getTextFromMessage(req.Messages[len(req.Messages)-1]),
 					},
 					FinishReason: "stop",
 				},
@@ -131,8 +148,8 @@ func TestCallWithMockServer(t *testing.T) {
 	defer server.Close()
 
 	// Create provider with mock server URL
-	baseURL := strings.TrimPrefix(server.URL, "http://")
-	provider := lms.New(lms.WithAddress("http://" + baseURL))
+	// Note: go-openai client automatically adds /v1 prefix to BaseURL
+	provider := lms.New(lms.WithAddress(server.URL))
 
 	// Test basic call
 	ctx := context.Background()
@@ -144,9 +161,10 @@ func TestCallWithMockServer(t *testing.T) {
 		receivedMessages = append(receivedMessages, msg)
 	}
 
-	response, err := provider.Call(ctx, "test-model", tools, "Hello, world!", storage, onMessage)
+	response, err := provider.Call(ctx, "test-model", tools, []agent.Content{{Type: agent.ContentTypeText, Content: "Hello, world!"}}, storage, onMessage)
 	require.NoError(t, err)
-	assert.Equal(t, "Mock response to: Hello, world!", response)
+	require.NotNil(t, response)
+	assert.Equal(t, "Mock response to: Hello, world!", response.Content)
 
 	// Check that messages were recorded
 	assert.Len(t, receivedMessages, 2) // User message + assistant response
@@ -164,7 +182,8 @@ func TestCallWithMockServer(t *testing.T) {
 func TestCallWithToolCalling(t *testing.T) {
 	// Create mock server that supports tool calling
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/v1/chat/completions" {
+		// Accept both /v1/chat/completions and /chat/completions paths
+		if r.URL.Path != "/v1/chat/completions" && r.URL.Path != "/chat/completions" {
 			http.NotFound(w, r)
 			return
 		}
@@ -233,8 +252,8 @@ func TestCallWithToolCalling(t *testing.T) {
 	defer server.Close()
 
 	// Create provider with mock server URL
-	baseURL := strings.TrimPrefix(server.URL, "http://")
-	provider := lms.New(lms.WithAddress("http://" + baseURL))
+	// Note: go-openai client automatically adds /v1 prefix to BaseURL
+	provider := lms.New(lms.WithAddress(server.URL))
 
 	// Create mock calculator tool
 	calcTool := createMockTool("calculator", "A calculator tool", "4")
@@ -248,9 +267,10 @@ func TestCallWithToolCalling(t *testing.T) {
 		receivedMessages = append(receivedMessages, msg)
 	}
 
-	response, err := provider.Call(ctx, "test-model", tools, "What is 2+2?", storage, onMessage)
+	response, err := provider.Call(ctx, "test-model", tools, []agent.Content{{Type: agent.ContentTypeText, Content: "What is 2+2?"}}, storage, onMessage)
 	require.NoError(t, err)
-	assert.Equal(t, "The result is 4", response)
+	require.NotNil(t, response)
+	assert.Equal(t, "The result is 4", response.Content)
 
 	// Check that we got messages including tool calls
 	assert.GreaterOrEqual(t, len(receivedMessages), 3) // User + Assistant + Tool + Assistant
@@ -282,7 +302,7 @@ func TestCallWithConnectionError(t *testing.T) {
 	storage := &mockHistoryStorage{}
 	tools := agent.Tools{}
 
-	_, err := provider.Call(ctx, "test-model", tools, "Hello", storage, nil)
+	_, err := provider.Call(ctx, "test-model", tools, []agent.Content{{Type: agent.ContentTypeText, Content: "Hello"}}, storage, nil)
 	assert.Error(t, err)
 }
 
@@ -295,8 +315,9 @@ func TestCallWithContextCancellation(t *testing.T) {
 	}))
 	defer server.Close()
 
-	baseURL := strings.TrimPrefix(server.URL, "http://")
-	provider := lms.New(lms.WithAddress("http://" + baseURL))
+	// Create provider with mock server URL
+	// Note: go-openai client automatically adds /v1 prefix to BaseURL
+	provider := lms.New(lms.WithAddress(server.URL))
 
 	// Short timeout context
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
@@ -305,7 +326,7 @@ func TestCallWithContextCancellation(t *testing.T) {
 	storage := &mockHistoryStorage{}
 	tools := agent.Tools{}
 
-	_, err := provider.Call(ctx, "test-model", tools, "Hello", storage, nil)
+	_, err := provider.Call(ctx, "test-model", tools, []agent.Content{{Type: agent.ContentTypeText, Content: "Hello"}}, storage, nil)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "context deadline exceeded")
 }
@@ -335,14 +356,16 @@ func TestCallWithEmptyTools(t *testing.T) {
 	}))
 	defer server.Close()
 
-	baseURL := strings.TrimPrefix(server.URL, "http://")
-	provider := lms.New(lms.WithAddress("http://" + baseURL))
+	// Create provider with mock server URL
+	// Note: go-openai client automatically adds /v1 prefix to BaseURL
+	provider := lms.New(lms.WithAddress(server.URL))
 
 	ctx := context.Background()
 	storage := &mockHistoryStorage{}
 	tools := agent.Tools{} // Empty tools
 
-	response, err := provider.Call(ctx, "test-model", tools, "Hello", storage, nil)
+	response, err := provider.Call(ctx, "test-model", tools, []agent.Content{{Type: agent.ContentTypeText, Content: "Hello"}}, storage, nil)
 	require.NoError(t, err)
-	assert.Equal(t, "Hello without tools", response)
+	require.NotNil(t, response)
+	assert.Equal(t, "Hello without tools", response.Content)
 }

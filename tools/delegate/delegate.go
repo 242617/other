@@ -54,7 +54,7 @@ func (t *Delegate) Call(ctx context.Context, raw string) string {
 	}
 	slog.Debug("call", "args", args)
 
-	response, err := t.assistant.Call(ctx, args.Task)
+	response, err := t.assistant.CallText(ctx, args.Task)
 	if err != nil {
 		return fmt.Sprintf("cannot call assistant due to error: %q", err.Error())
 	}

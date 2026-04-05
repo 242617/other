@@ -78,10 +78,19 @@ type Session struct {
 	agent *Agent
 }
 
-func (s *Session) Call(ctx context.Context, text string) (string, error) {
-	res, err := s.agent.provider.Call(ctx, s.agent.model, s.agent.tools, text, s.agent.storage, s.agent.messageCallback)
+func (s *Session) CallText(ctx context.Context, text string) (string, error) {
+	content := []Content{{Type: ContentTypeText, Content: text}}
+	res, err := s.agent.provider.Call(ctx, s.agent.model, s.agent.tools, content, s.agent.storage, s.agent.messageCallback)
 	if err != nil {
 		return "", errors.Wrap(err, "provider call")
+	}
+	return res.Content, nil
+}
+
+func (s *Session) Call(ctx context.Context, content ...Content) (*Content, error) {
+	res, err := s.agent.provider.Call(ctx, s.agent.model, s.agent.tools, content, s.agent.storage, s.agent.messageCallback)
+	if err != nil {
+		return nil, errors.Wrap(err, "provider call")
 	}
 	return res, nil
 }

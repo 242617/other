@@ -154,9 +154,21 @@ func toAgentMessage(msg openai.ChatCompletionMessage) agent.Message {
 		extra += fmt.Sprintf("tool_call_id: %s", msg.ToolCallID)
 	}
 
+	// Extract text content from either Content or MultiContent
+	text := msg.Content
+	if text == "" && len(msg.MultiContent) > 0 {
+		var textParts []string
+		for _, part := range msg.MultiContent {
+			if part.Type == openai.ChatMessagePartTypeText {
+				textParts = append(textParts, part.Text)
+			}
+		}
+		text = strings.Join(textParts, " ")
+	}
+
 	return agent.Message{
 		Role:  msg.Role,
-		Text:  msg.Content,
+		Text:  text,
 		Extra: extra,
 	}
 }

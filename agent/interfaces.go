@@ -3,7 +3,8 @@ package agent
 import "context"
 
 type Assistant interface {
-	Call(ctx context.Context, text string) (string, error)
+	CallText(ctx context.Context, text string) (string, error)
+	Call(ctx context.Context, content ...Content) (*Content, error)
 }
 
 type HistoryStorage interface {
@@ -12,7 +13,7 @@ type HistoryStorage interface {
 }
 
 type Provider interface {
-	Call(ctx context.Context, model string, tools Tools, text string, storage HistoryStorage, onMessage MessageCallback) (string, error)
+	Call(ctx context.Context, model string, tools Tools, content []Content, storage HistoryStorage, onMessage MessageCallback) (*Content, error)
 	EncodeSystemMessage(message Message) (string, error)
 }
 

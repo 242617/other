@@ -2,7 +2,9 @@ package lms
 
 import (
 	"context"
+	"encoding/base64"
 	"log/slog"
+	"os"
 
 	"github.com/pkg/errors"
 	openai "github.com/sashabaranov/go-openai"
@@ -14,25 +16,25 @@ func (p *LMS) Call(
 	ctx context.Context,
 	model string,
 	tools agent.Tools,
-	text string,
+	content []agent.Content,
 	storage agent.HistoryStorage,
 	onMessage agent.MessageCallback,
-) (string, error) {
+) (*agent.Content, error) {
 	if p.encode == nil {
-		return "", errors.New("empty encode")
+		return nil, errors.New("empty encode")
 	}
 	if p.decode == nil {
-		return "", errors.New("empty decode")
+		return nil, errors.New("empty decode")
 	}
 	if onMessage == nil {
 		onMessage = func(agent.Message) {}
 	}
 
-	resChan := make(chan string, 1)
+	resChan := make(chan *agent.Content, 1)
 
 	h, err := p.loadHistory(storage)
 	if err != nil {
-		return "", errors.Wrap(err, "load history")
+		return nil, errors.Wrap(err, "load history")
 	}
 
 	defer func(startFrom int) {
@@ -75,7 +77,10 @@ func (p *LMS) Call(
 		// Check if tools were called
 		if len(responseMsg.ToolCalls) == 0 {
 			// No tools called, return final response
-			resChan <- responseMsg.Content
+			resChan <- &agent.Content{
+				Type:    agent.ContentTypeText,
+				Content: responseMsg.Content,
+			}
 			return nil
 		}
 
@@ -83,7 +88,10 @@ func (p *LMS) Call(
 		toolMessages := p.processToolCalls(ctx, responseMsg.ToolCalls, tools)
 		if len(toolMessages) == 0 {
 			// No valid tool responses, return the assistant's message as-is
-			resChan <- responseMsg.Content
+			resChan <- &agent.Content{
+				Type:    agent.ContentTypeText,
+				Content: responseMsg.Content,
+			}
 			return nil
 		}
 
@@ -91,20 +99,50 @@ func (p *LMS) Call(
 		return call(toolMessages...)
 	}
 
+	// Convert agent.Content to OpenAI multimodal message parts
+	userMessageParts := make([]openai.ChatMessagePart, 0, len(content))
+	for _, c := range content {
+		switch c.Type {
+		case agent.ContentTypeText:
+			userMessageParts = append(userMessageParts, openai.ChatMessagePart{
+				Type: openai.ChatMessagePartTypeText,
+				Text: c.Content,
+			})
+		case agent.ContentTypeImage:
+			// Load image file and encode to base64
+			imageData, err := os.ReadFile(c.Content)
+			if err != nil {
+				return nil, errors.Wrap(err, "read image file")
+			}
+			base64Data := base64.StdEncoding.EncodeToString(imageData)
+			mimeType := c.MimeType
+			if mimeType == "" {
+				mimeType = "image/png" // Default to PNG
+			}
+			userMessageParts = append(userMessageParts, openai.ChatMessagePart{
+				Type: openai.ChatMessagePartTypeImageURL,
+				ImageURL: &openai.ChatMessageImageURL{
+					URL:    "data:" + mimeType + ";base64," + base64Data,
+					Detail: openai.ImageURLDetailAuto,
+				},
+			})
+		}
+	}
+
 	userMessage := openai.ChatCompletionMessage{
-		Role:    openai.ChatMessageRoleUser,
-		Content: text,
+		Role:         openai.ChatMessageRoleUser,
+		MultiContent: userMessageParts,
 	}
 
 	if err := call(userMessage); err != nil {
-		slog.Error("conversation failed", "error", err, "user_message", text)
-		return "", errors.Wrap(err, "conversation failed")
+		slog.Error("conversation failed", "error", err, "content", content)
+		return nil, errors.Wrap(err, "conversation failed")
 	}
 
 	select {
 	case response := <-resChan:
 		return response, nil
 	case <-ctx.Done():
-		return "", ctx.Err()
+		return nil, ctx.Err()
 	}
 }

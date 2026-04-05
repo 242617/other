@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"log/slog"
+	"os"
 
 	"github.com/ollama/ollama/api"
 	"github.com/pkg/errors"
@@ -15,25 +16,25 @@ func (p *Ollama) Call(
 	ctx context.Context,
 	model string,
 	tools agent.Tools,
-	text string,
+	content []agent.Content,
 	storage agent.HistoryStorage,
 	onMessage agent.MessageCallback,
-) (string, error) {
+) (*agent.Content, error) {
 	if p.encode == nil {
-		return "", errors.New("empty encode")
+		return nil, errors.New("empty encode")
 	}
 	if p.decode == nil {
-		return "", errors.New("empty decode")
+		return nil, errors.New("empty decode")
 	}
 	if onMessage == nil {
 		onMessage = func(agent.Message) {}
 	}
 
-	resCh := make(chan string, 1)
+	resCh := make(chan *agent.Content, 1)
 
 	h, err := p.loadHistory(storage)
 	if err != nil {
-		return "", errors.Wrap(err, "load history")
+		return nil, errors.Wrap(err, "load history")
 	}
 
 	defer func(startFrom int) {
@@ -73,7 +74,10 @@ func (p *Ollama) Call(
 		h = append(h, msg) // Add message from model
 
 		if len(msg.ToolCalls) == 0 { // TODO: Check "finish_reason"
-			resCh <- msg.Content
+			resCh <- &agent.Content{
+				Type:    agent.ContentTypeText,
+				Content: msg.Content,
+			}
 			return nil
 		}
 
@@ -109,16 +113,32 @@ func (p *Ollama) Call(
 		return nil
 	}
 
-	message := api.Message{Role: "user", Content: text}
+	// Convert agent.Content to Ollama message with images
+	message := api.Message{Role: "user"}
+	for _, c := range content {
+		switch c.Type {
+		case agent.ContentTypeText:
+			message.Content = c.Content
+		case agent.ContentTypeImage:
+			// Load image file - Ollama expects raw binary data
+			imageData, err := os.ReadFile(c.Content)
+			if err != nil {
+				return nil, errors.Wrap(err, "read image file")
+			}
+			// Ollama expects raw binary images (not base64 encoded)
+			message.Images = append(message.Images, imageData)
+		}
+	}
+
 	if err := call(message); err != nil {
 		slog.Error("call", "err", err, "message", message)
-		return "", errors.Wrap(err, "call")
+		return nil, errors.Wrap(err, "call")
 	}
 
 	select {
 	case msg := <-resCh:
 		return msg, nil
 	case <-ctx.Done():
-		return "", ctx.Err()
+		return nil, ctx.Err()
 	}
 }

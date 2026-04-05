@@ -39,15 +39,16 @@ func TestLiveIntegration(t *testing.T) {
 			ctx,
 			"openai/gpt-oss-20b",
 			agent.Tools{},
-			"Hello! Please respond with exactly 'Hello from LM Studio!' and nothing else.",
+			[]agent.Content{{Type: agent.ContentTypeText, Content: "Hello! Please respond with exactly 'Hello from LM Studio!' and nothing else."}},
 			storage,
 			onMessage,
 		)
 
 		require.NoError(t, err)
-		assert.NotEmpty(t, response)
-		assert.Contains(t, response, "Hello")
-		t.Logf("Final response: %s", response)
+		require.NotNil(t, response)
+		assert.NotEmpty(t, response.Content)
+		assert.Contains(t, response.Content, "Hello")
+		t.Logf("Final response: %s", response.Content)
 
 		// Verify we got both user and assistant messages
 		assert.GreaterOrEqual(t, len(messages), 2)
@@ -89,14 +90,15 @@ func TestLiveIntegration(t *testing.T) {
 			ctx,
 			"openai/gpt-oss-20b",
 			tools,
-			"Please use the calculator tool to compute 2+2. Just call the tool with expression '2+2'.",
+			[]agent.Content{{Type: agent.ContentTypeText, Content: "Please use the calculator tool to compute 2+2. Just call the tool with expression '2+2'."}},
 			storage,
 			onMessage,
 		)
 
 		require.NoError(t, err)
-		assert.NotEmpty(t, response)
-		t.Logf("Final response: %s", response)
+		require.NotNil(t, response)
+		assert.NotEmpty(t, response.Content)
+		t.Logf("Final response: %s", response.Content)
 
 		// Check if any message contains tool call information
 		foundToolCall := false
@@ -132,7 +134,7 @@ func TestLiveSimpleChat(t *testing.T) {
 		ctx,
 		"openai/gpt-oss-20b",
 		agent.Tools{},
-		"Say 'Hello world' and nothing else.",
+		[]agent.Content{{Type: agent.ContentTypeText, Content: "Say 'Hello world' and nothing else."}},
 		storage,
 		func(agent.Message) {},
 	)
@@ -144,6 +146,7 @@ func TestLiveSimpleChat(t *testing.T) {
 	}
 
 	require.NoError(t, err)
-	assert.NotEmpty(t, response)
-	t.Logf("LM Studio response: %s", response)
+	require.NotNil(t, response)
+	assert.NotEmpty(t, response.Content)
+	t.Logf("LM Studio response: %s", response.Content)
 }

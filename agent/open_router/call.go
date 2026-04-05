@@ -2,29 +2,31 @@ package open_router
 
 import (
 	"context"
+	"encoding/base64"
 	"log/slog"
+	"os"
 
 	"github.com/pkg/errors"
 
 	"github.com/242617/other/agent"
 )
 
-func (p *OpenRouter) Call(ctx context.Context, model string, tools agent.Tools, text string, storage agent.HistoryStorage, onMessage agent.MessageCallback) (string, error) {
+func (p *OpenRouter) Call(ctx context.Context, model string, tools agent.Tools, content []agent.Content, storage agent.HistoryStorage, onMessage agent.MessageCallback) (*agent.Content, error) {
 	if p.encode == nil {
-		return "", errors.New("empty encode")
+		return nil, errors.New("empty encode")
 	}
 	if p.decode == nil {
-		return "", errors.New("empty decode")
+		return nil, errors.New("empty decode")
 	}
 	if p.token == "" {
-		return "", errors.New("empty token")
+		return nil, errors.New("empty token")
 	}
 
-	resCh := make(chan string, 1)
+	resCh := make(chan *agent.Content, 1)
 
 	h, err := p.getHistory(storage)
 	if err != nil {
-		return "", errors.Wrap(err, "list to history")
+		return nil, errors.Wrap(err, "list to history")
 	}
 
 	defer func(startFrom int) {
@@ -64,7 +66,10 @@ func (p *OpenRouter) Call(ctx context.Context, model string, tools agent.Tools, 
 		h = append(h, msg) // Add message from model
 
 		if len(msg.ToolCalls) == 0 { // TODO: Check "finish_reason"
-			resCh <- msg.Content
+			resCh <- &agent.Content{
+				Type:    agent.ContentTypeText,
+				Content: msg.Content,
+			}
 			return nil
 		}
 
@@ -94,16 +99,37 @@ func (p *OpenRouter) Call(ctx context.Context, model string, tools agent.Tools, 
 		return nil
 	}
 
-	message := message{Role: "user", Content: text}
+	// OpenRouter supports multimodal content similar to OpenAI API
+	message := message{Role: "user"}
+	for _, c := range content {
+		switch c.Type {
+		case agent.ContentTypeText:
+			message.Content = c.Content
+		case agent.ContentTypeImage:
+			// Load image file and encode to base64
+			imageData, err := os.ReadFile(c.Content)
+			if err != nil {
+				return nil, errors.Wrap(err, "read image file")
+			}
+			base64Data := base64.StdEncoding.EncodeToString(imageData)
+			mimeType := c.MimeType
+			if mimeType == "" {
+				mimeType = "image/png" // Default to PNG
+			}
+			// OpenRouter expects image URLs or base64 data URIs
+			message.Content += " [image:" + "data:" + mimeType + ";base64," + base64Data + "]"
+		}
+	}
+
 	if err := call(message); err != nil {
 		slog.Error("call", "err", err, "message", message)
-		return "", errors.Wrap(err, "call")
+		return nil, errors.Wrap(err, "call")
 	}
 
 	select {
 	case msg := <-resCh:
 		return msg, nil
 	case <-ctx.Done():
-		return "", ctx.Err()
+		return nil, ctx.Err()
 	}
 }

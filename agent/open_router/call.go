@@ -2,9 +2,7 @@ package open_router
 
 import (
 	"context"
-	"encoding/base64"
 	"log/slog"
-	"os"
 
 	"github.com/pkg/errors"
 
@@ -106,18 +104,13 @@ func (p *OpenRouter) Call(ctx context.Context, model string, tools agent.Tools, 
 		case agent.ContentTypeText:
 			message.Content = c.Content
 		case agent.ContentTypeImage:
-			// Load image file and encode to base64
-			imageData, err := os.ReadFile(c.Content)
-			if err != nil {
-				return nil, errors.Wrap(err, "read image file")
-			}
-			base64Data := base64.StdEncoding.EncodeToString(imageData)
+			// Content already contains base64-encoded image data
 			mimeType := c.MimeType
 			if mimeType == "" {
 				mimeType = "image/png" // Default to PNG
 			}
 			// OpenRouter expects image URLs or base64 data URIs
-			message.Content += " [image:" + "data:" + mimeType + ";base64," + base64Data + "]"
+			message.Content += " [image:" + "data:" + mimeType + ";base64," + c.Content + "]"
 		}
 	}
 

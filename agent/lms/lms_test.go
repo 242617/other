@@ -161,7 +161,7 @@ func TestCallWithMockServer(t *testing.T) {
 		receivedMessages = append(receivedMessages, msg)
 	}
 
-	response, err := provider.Call(ctx, "test-model", tools, []agent.Content{{Type: agent.ContentTypeText, Content: "Hello, world!"}}, storage, onMessage)
+	response, err := provider.Call(ctx, "test-model", tools, []agent.Content{agent.NewTextContent("Hello, world!")}, storage, onMessage)
 	require.NoError(t, err)
 	require.NotNil(t, response)
 	assert.Equal(t, "Mock response to: Hello, world!", response.Content)
@@ -267,7 +267,7 @@ func TestCallWithToolCalling(t *testing.T) {
 		receivedMessages = append(receivedMessages, msg)
 	}
 
-	response, err := provider.Call(ctx, "test-model", tools, []agent.Content{{Type: agent.ContentTypeText, Content: "What is 2+2?"}}, storage, onMessage)
+	response, err := provider.Call(ctx, "test-model", tools, []agent.Content{agent.NewTextContent("What is 2+2?")}, storage, onMessage)
 	require.NoError(t, err)
 	require.NotNil(t, response)
 	assert.Equal(t, "The result is 4", response.Content)
@@ -302,7 +302,7 @@ func TestCallWithConnectionError(t *testing.T) {
 	storage := &mockHistoryStorage{}
 	tools := agent.Tools{}
 
-	_, err := provider.Call(ctx, "test-model", tools, []agent.Content{{Type: agent.ContentTypeText, Content: "Hello"}}, storage, nil)
+	_, err := provider.Call(ctx, "test-model", tools, []agent.Content{agent.NewTextContent("Hello")}, storage, nil)
 	assert.Error(t, err)
 }
 
@@ -326,7 +326,7 @@ func TestCallWithContextCancellation(t *testing.T) {
 	storage := &mockHistoryStorage{}
 	tools := agent.Tools{}
 
-	_, err := provider.Call(ctx, "test-model", tools, []agent.Content{{Type: agent.ContentTypeText, Content: "Hello"}}, storage, nil)
+	_, err := provider.Call(ctx, "test-model", tools, []agent.Content{agent.NewTextContent("Hello")}, storage, nil)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "context deadline exceeded")
 }
@@ -364,8 +364,68 @@ func TestCallWithEmptyTools(t *testing.T) {
 	storage := &mockHistoryStorage{}
 	tools := agent.Tools{} // Empty tools
 
-	response, err := provider.Call(ctx, "test-model", tools, []agent.Content{{Type: agent.ContentTypeText, Content: "Hello"}}, storage, nil)
+	response, err := provider.Call(ctx, "test-model", tools, []agent.Content{agent.NewTextContent("Hello")}, storage, nil)
 	require.NoError(t, err)
 	require.NotNil(t, response)
 	assert.Equal(t, "Hello without tools", response.Content)
+}
+
+// Test with multimodal content (image + text)
+func TestCallWithImageContent(t *testing.T) {
+	// Create mock server
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Accept both /v1/chat/completions and /chat/completions paths
+		if r.URL.Path != "/v1/chat/completions" && r.URL.Path != "/chat/completions" {
+			http.NotFound(w, r)
+			return
+		}
+
+		// Parse request
+		var req openai.ChatCompletionRequest
+		err := json.NewDecoder(r.Body).Decode(&req)
+		require.NoError(t, err)
+
+		// Verify that MultiContent was used
+		lastMessage := req.Messages[len(req.Messages)-1]
+		assert.NotEmpty(t, lastMessage.MultiContent, "Expected MultiContent for image")
+
+		// Create mock response
+		resp := openai.ChatCompletionResponse{
+			ID:      "chatcmpl-test",
+			Object:  "chat.completion",
+			Created: time.Now().Unix(),
+			Model:   req.Model,
+			Choices: []openai.ChatCompletionChoice{
+				{
+					Index: 0,
+					Message: openai.ChatCompletionMessage{
+						Role:    openai.ChatMessageRoleAssistant,
+						Content: "I can see an image",
+					},
+					FinishReason: "stop",
+				},
+			},
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(resp)
+	}))
+	defer server.Close()
+
+	// Create provider with mock server URL
+	provider := lms.New(lms.WithAddress(server.URL))
+
+	ctx := context.Background()
+	storage := &mockHistoryStorage{}
+	tools := agent.Tools{}
+
+	// Create image content from base64 (small 1x1 red pixel PNG)
+	redPixelBase64 := "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFBQIAX8jx0gAAAABJRU5ErkJggg=="
+	imageContent := agent.NewImageContent(redPixelBase64, "image/png")
+	textContent := agent.NewTextContent("What is in this image?")
+
+	response, err := provider.Call(ctx, "test-model", tools, []agent.Content{imageContent, textContent}, storage, nil)
+	require.NoError(t, err)
+	require.NotNil(t, response)
+	assert.Equal(t, "I can see an image", response.Content)
 }

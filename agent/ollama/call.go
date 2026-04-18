@@ -2,9 +2,9 @@ package ollama
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"log/slog"
-	"os"
 
 	"github.com/ollama/ollama/api"
 	"github.com/pkg/errors"
@@ -120,12 +120,11 @@ func (p *Ollama) Call(
 		case agent.ContentTypeText:
 			message.Content = c.Content
 		case agent.ContentTypeImage:
-			// Load image file - Ollama expects raw binary data
-			imageData, err := os.ReadFile(c.Content)
+			// Ollama expects raw binary images - decode base64
+			imageData, err := base64.StdEncoding.DecodeString(c.Content)
 			if err != nil {
-				return nil, errors.Wrap(err, "read image file")
+				return nil, errors.Wrap(err, "decode base64 image")
 			}
-			// Ollama expects raw binary images (not base64 encoded)
 			message.Images = append(message.Images, imageData)
 		}
 	}

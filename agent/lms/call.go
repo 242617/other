@@ -2,9 +2,7 @@ package lms
 
 import (
 	"context"
-	"encoding/base64"
 	"log/slog"
-	"os"
 
 	"github.com/pkg/errors"
 	openai "github.com/sashabaranov/go-openai"
@@ -109,12 +107,7 @@ func (p *LMS) Call(
 				Text: c.Content,
 			})
 		case agent.ContentTypeImage:
-			// Load image file and encode to base64
-			imageData, err := os.ReadFile(c.Content)
-			if err != nil {
-				return nil, errors.Wrap(err, "read image file")
-			}
-			base64Data := base64.StdEncoding.EncodeToString(imageData)
+			// Content already contains base64-encoded image data
 			mimeType := c.MimeType
 			if mimeType == "" {
 				mimeType = "image/png" // Default to PNG
@@ -122,7 +115,7 @@ func (p *LMS) Call(
 			userMessageParts = append(userMessageParts, openai.ChatMessagePart{
 				Type: openai.ChatMessagePartTypeImageURL,
 				ImageURL: &openai.ChatMessageImageURL{
-					URL:    "data:" + mimeType + ";base64," + base64Data,
+					URL:    "data:" + mimeType + ";base64," + c.Content,
 					Detail: openai.ImageURLDetailAuto,
 				},
 			})
@@ -135,7 +128,7 @@ func (p *LMS) Call(
 	}
 
 	if err := call(userMessage); err != nil {
-		slog.Error("conversation failed", "error", err, "content", content)
+		slog.Error("conversation failed", "error", err)
 		return nil, errors.Wrap(err, "conversation failed")
 	}
 

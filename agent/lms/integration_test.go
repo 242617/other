@@ -39,7 +39,7 @@ func TestLiveIntegration(t *testing.T) {
 			ctx,
 			"openai/gpt-oss-20b",
 			agent.Tools{},
-			[]agent.Content{{Type: agent.ContentTypeText, Content: "Hello! Please respond with exactly 'Hello from LM Studio!' and nothing else."}},
+			[]agent.Content{agent.NewTextContent("Hello! Please respond with exactly 'Hello from LM Studio!' and nothing else.")},
 			storage,
 			onMessage,
 		)
@@ -90,7 +90,7 @@ func TestLiveIntegration(t *testing.T) {
 			ctx,
 			"openai/gpt-oss-20b",
 			tools,
-			[]agent.Content{{Type: agent.ContentTypeText, Content: "Please use the calculator tool to compute 2+2. Just call the tool with expression '2+2'."}},
+			[]agent.Content{agent.NewTextContent("Please use the calculator tool to compute 2+2. Just call the tool with expression '2+2'.")},
 			storage,
 			onMessage,
 		)
@@ -134,7 +134,7 @@ func TestLiveSimpleChat(t *testing.T) {
 		ctx,
 		"openai/gpt-oss-20b",
 		agent.Tools{},
-		[]agent.Content{{Type: agent.ContentTypeText, Content: "Say 'Hello world' and nothing else."}},
+		[]agent.Content{agent.NewTextContent("Say 'Hello world' and nothing else.")},
 		storage,
 		func(agent.Message) {},
 	)
